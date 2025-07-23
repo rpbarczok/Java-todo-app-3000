@@ -51,4 +51,12 @@ public class Todo {
         return this;
     }
 
+    public Todo setStateDeleted() {
+        TodoDto todoDto = getLatestStateAsTodoDto();
+        processCounter += 1;
+        TodoState deleteState = new TodoState(todoDto.description(), Status.DELETED);
+        todoTimeline.put(processCounter, deleteState);
+        return this;
+    }
+
 }

@@ -5,6 +5,7 @@ import org.example.javatodoapp3000.dtos.TodoDto;
 import org.example.javatodoapp3000.exceptions.NotFoundException;
 import org.example.javatodoapp3000.models.Todo;
 import org.example.javatodoapp3000.repository.TodoRepo;
+import org.example.javatodoapp3000.utils.Status;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -17,13 +18,13 @@ public class TodoService {
         private final TodoRepo todoRepo;
 
         public List<TodoDto> findAllTodos() {
-            System.out.println("Service findAllTodos");
             List<Todo> todos = todoRepo.findAll();
-            System.out.println("Service after findAllTodos");
             List<TodoDto> todosDto = new ArrayList<>();
             for (Todo todo : todos) {
-                System.out.println(todo);
-                todosDto.add(todo.getLatestStateAsTodoDto());
+                TodoDto todoDto = todo.getLatestStateAsTodoDto();
+                if (todoDto.status() != Status.DELETED) {
+                    todosDto.add(todoDto);
+                }
             }
             return todosDto;
         }
@@ -50,4 +51,13 @@ public class TodoService {
             }
         }
 
+        public void setTodoToDeleted(String id) throws NotFoundException {
+            Todo todo = todoRepo.findTodoById(id);
+            if (todo != null) {
+                Todo deletedTodo = todo.setStateDeleted();
+                todoRepo.save(deletedTodo);
+            } else {
+                throw new NotFoundException("Todo item with id " + id + " not found.");
+            }
+        }
 }

@@ -41,7 +41,19 @@ public class TodoController {
             return todoService.updateTodo(todoDto);
         } catch (NotFoundException nfe) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, nfe.getMessage());
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal  Server Error");
         }
+    }
 
+    @DeleteMapping("/{id}")
+    public void deleteTodo(@PathVariable String id) {
+        try {
+            todoService.setTodoToDeleted(id);
+        } catch (NotFoundException nfe) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, nfe.getMessage());
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal  Server Error");
+        }
     }
 }
