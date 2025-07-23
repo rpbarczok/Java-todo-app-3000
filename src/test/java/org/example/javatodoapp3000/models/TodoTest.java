@@ -24,13 +24,13 @@ class TodoTest {
         //GIVEN
 
         TodoState initialState = new TodoState("Initial State", Status.OPEN);
-        TodoState updateState = new TodoState("Update State", Status.CLOSED);
-        Map<Integer, TodoState> timeline = new HashMap<Integer, TodoState>();
+        TodoState updateState = new TodoState("Update State", Status.IN_PROGRESS);
+        Map<Integer, TodoState> timeline = new HashMap<>();
         timeline.put(1, initialState);
         timeline.put(2, updateState);
         Todo todo = new Todo(uuid.toString(), timeline);
 
-        TodoDto expected = new TodoDto(uuid.toString(), "Update State", Status.CLOSED);
+        TodoDto expected = new TodoDto(uuid.toString(), "Update State", Status.IN_PROGRESS);
 
         // When
         TodoDto actual = todo.getLatestStateAsTodoDto();
@@ -39,4 +39,47 @@ class TodoTest {
         assertEquals(expected, actual);
 
     }
+
+    @Test
+    void updateTodo_returns_updated_todo() {
+        // Given
+        TodoState initialState = new TodoState("Initial State", Status.OPEN);
+        TodoState updateState = new TodoState("Update State", Status.IN_PROGRESS);
+        TodoDto newTodoDto = new TodoDto(uuid.toString(), "Update State", Status.IN_PROGRESS);
+        Map<Integer, TodoState> timeline = new HashMap<>();
+        timeline.put(1, initialState);
+        Todo original = new Todo(uuid.toString(), timeline);
+
+        Todo expected = original;
+        original.getTodoTimeline().put(2, updateState);
+
+        // When
+
+        Todo actual = original.updateTodo(newTodoDto);
+
+        // Then
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void setStateDeleted_returns_deleted_todo() {
+        // Given
+        TodoState initialState = new TodoState("Initial State", Status.OPEN);
+        TodoState updateState = new TodoState("Initial State", Status.DELETED);
+
+        Map<Integer, TodoState> timeline = new HashMap<>();
+        timeline.put(1, initialState);
+        Todo original = new Todo(uuid.toString(), timeline);
+
+        Todo expected = original;
+        original.getTodoTimeline().put(2, updateState);
+
+        // When
+
+        Todo actual = original.setStateDeleted();
+
+        // Then
+        assertEquals(expected, actual);
+    }
+
 }

@@ -10,12 +10,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class TodoService {
         private final TodoRepo todoRepo;
+        private final IdService idService;
 
         public List<TodoDto> findAllTodos() {
             List<Todo> todos = todoRepo.findAll();
@@ -30,7 +30,7 @@ public class TodoService {
         }
 
         public TodoDto addTodo(TodoDto todoDto) {
-            Todo todo = new Todo(UUID.randomUUID().toString(), todoDto);
+            Todo todo = new Todo(idService.generateId(), todoDto);
             Todo newTodo = todoRepo.save(todo);
             return newTodo.getLatestStateAsTodoDto();
         }

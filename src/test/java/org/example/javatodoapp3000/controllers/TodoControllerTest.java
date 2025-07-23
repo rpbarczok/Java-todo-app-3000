@@ -1,6 +1,7 @@
 package org.example.javatodoapp3000.controllers;
 
 import org.example.javatodoapp3000.dtos.TodoDto;
+import org.example.javatodoapp3000.services.IdService;
 import org.example.javatodoapp3000.services.TodoService;
 import org.example.javatodoapp3000.utils.Status;
 import org.junit.jupiter.api.Test;
@@ -13,23 +14,19 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
-
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TodoControllerTest{
-    static UUID uuid = UUID.randomUUID();
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
     private TodoService todoService;
+
+    @Autowired
+    private IdService idService;
 
     @Test
     void getAllTodos_returns_empty_list_when_empty() throws Exception {
@@ -41,11 +38,8 @@ class TodoControllerTest{
 
     @Test
     void getAllTodos_returns_list_of_one_todo() throws Exception {
-        mockStatic(UUID.class);
-        when(UUID.randomUUID()).thenReturn(uuid);
-
         //Given
-        todoService.addTodo(new TodoDto(uuid.toString(), "Hallo", Status.OPEN));
+        todoService.addTodo(new TodoDto(idService.generateId(), "Hallo", Status.OPEN));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/todo"))
                 //then
@@ -61,7 +55,7 @@ class TodoControllerTest{
     };
 
     @Test
-    void postTodo() throws Exception {
+    void postTodo_returns_new_todo() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/todo")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -72,4 +66,15 @@ class TodoControllerTest{
                         """))
                 .andExpect(MockMvcResultMatchers.status().isOk());
     }
+
+    @Test
+    void getMappingId_gets_specific_todo_id() throws Exception {
+
+    }
+
+    @Test
+    void getMappingId_throws_exception_when_todo_exists() throws Exception {
+
+    }
+
 }
