@@ -30,7 +30,7 @@ class TodoControllerTest{
 
     @Test
     void getAllTodos_returns_empty_list_when_empty() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/todos"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/todo"))
                 //then
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().json("[]"));
@@ -51,7 +51,7 @@ class TodoControllerTest{
                                   "status": "OPEN"
                               }
                           ]
-"""));
+                    """));
     };
 
     @Test
@@ -64,17 +64,116 @@ class TodoControllerTest{
                           "status": "OPEN"
                          }
                         """))
-                .andExpect(MockMvcResultMatchers.status().isOk());
+                .andExpect(MockMvcResultMatchers.status().isCreated());
     }
 
     @Test
-    void getMappingId_gets_specific_todo_id() throws Exception {
+    void getTodo_by_id_gets_specific_todo_id() throws Exception {
+        //Given
+        todoService.addTodo(new TodoDto("1234", "Hallo", Status.OPEN));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/todo/1234"))
+                //then
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().json("""
+                              {
+                                  "description": "Hallo",
+                                  "status": "OPEN"
+                              }
+                """))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").isNotEmpty());
+    }
+
+    @Test
+    void getTodo_by_Id_throws_404_when_todo_does_not_exist() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/todo/fail"))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    void getTodo_by_Id_throws_404_when_todo_does_was_deleted() throws Exception {
+        todoService.addTodo(new TodoDto("1234", "Hallo", Status.DELETED));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/todo/1234"))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    void  putTodo_returns_updated_todo() throws Exception {
+        //Given
+        todoService.addTodo(new TodoDto("1234", "Hallo", Status.OPEN));
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/todo/1234")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                 "id": "1234",
+                                 "description": "Hallo",
+                                 "status": "IN_PROGRESS"
+                                 }
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().json("""
+                        {
+                                "id": "1234",
+                                "description": "Hallo",
+                                "status": "IN_PROGRESS"
+                        }
+                        """));
+    }
+
+    @Test
+    void  putTodo_throws_throws_404_when_todo_does_not_exist() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/todo/fail")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {
+                          "id": "fail",
+                          "description": "Hallo World",
+                          "status": "OPEN"
+                         }
+                        """))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    void  putTodo_throws_throws_404_when_todo_is_deleted() throws Exception {
+        //Given
+        todoService.addTodo(new TodoDto("1234", "Hallo", Status.DELETED));
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/todo/1234")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "id": "1234",
+                          "description": "Hallo World",
+                          "status": "IN_PROGRESS"
+                         }
+                        """))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    void deleteTodo_succeeds_when_todo_exists() throws Exception {
+        todoService.addTodo(new TodoDto("1234", "Hallo", Status.OPEN));
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/todo/1234"))
+                .andExpect(MockMvcResultMatchers.status().isNoContent());
 
     }
 
     @Test
-    void getMappingId_throws_exception_when_todo_exists() throws Exception {
-
+    void deleteTodo_returns_404_when_called_with_non_existing_todo() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/todo/1234"))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
     }
 
+    @Test
+    void deleteTodo_returns_404_when_called_with_deleted_todo() throws Exception {
+        todoService.addTodo(new TodoDto("1234", "Hallo", Status.DELETED));
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/todo/1234"))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+
+    }
 }

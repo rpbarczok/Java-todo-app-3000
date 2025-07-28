@@ -75,7 +75,7 @@ class TodoServiceTest {
     }
 
     @Test
-    void findTodoById() throws NotFoundException {
+    void findTodoById_shouldReturnTodo_whenCalledWithExistingID() throws NotFoundException {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
         TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
@@ -96,7 +96,49 @@ class TodoServiceTest {
     }
 
     @Test
-    void updateTodo() throws NotFoundException {
+    void findTodoById_shouldReturnNotFoundException_whenCalledWithNonExistingID() throws NotFoundException {
+        TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
+        IdService mockIdService = Mockito.mock(IdService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+
+        when(mockTodoRepo.findTodoById(any())).thenReturn(null);
+        //Then
+        try {
+            todoService.findTodoById("1234");
+            fail();
+        } catch (NotFoundException e) {
+            //
+        } catch (Exception e) {
+            fail();
+        }
+    }
+
+    @Test
+    void findTodoById_shouldReturnNotFoundException_whenCalledWithDeletedID() throws NotFoundException {
+        TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
+        IdService mockIdService = Mockito.mock(IdService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+
+        when(mockIdService.generateId()).thenReturn("1234");
+
+
+        Todo todo = new Todo("1234", "DELETED", Status.DELETED);
+
+        when(mockTodoRepo.findTodoById(any())).thenReturn(todo);
+
+        try {
+            todoService.findTodoById("1234");
+            fail();
+        } catch (NotFoundException e) {
+            //
+        } catch (Exception e) {
+            fail();
+        }
+
+    }
+
+    @Test
+    void updateTodo_shouldReturnUpdatedTodo_whenCalled_withExistingID() throws NotFoundException {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
         TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
@@ -122,7 +164,51 @@ class TodoServiceTest {
     }
 
     @Test
-    void setTodoToDeleted() {
+    void updateTodo_shouldReturn404_whenCalled_withNonExistingID() throws NotFoundException {
+        TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
+        IdService mockIdService = Mockito.mock(IdService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+        when(mockIdService.generateId()).thenReturn("1234");
+
+        when(mockTodoRepo.findTodoById(any())).thenReturn(null);
+
+        // When
+        try {
+            todoService.updateTodo(new TodoDto("1234", "Initial Content", Status.IN_PROGRESS));
+            fail();
+        } catch (NotFoundException e) {
+            // success
+        } catch (Exception e) {
+            fail();
+        }
+    }
+
+    @Test
+    void updateTodo_shouldReturn404_whenCalled_withDeletedID() throws NotFoundException {
+        TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
+        IdService mockIdService = Mockito.mock(IdService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+
+        Map<Integer, TodoState> timeline = new HashMap<>();
+        timeline.put(1, new  TodoState("Initial Content", Status.OPEN));
+        timeline.put(2, new TodoState("Initial Content", Status.DELETED));
+        Todo DeletedTodo = new Todo ("1234", timeline);
+
+        when(mockTodoRepo.findTodoById(any())).thenReturn(DeletedTodo);
+
+        try {
+            todoService.updateTodo(new TodoDto("1234", "Initial Content", Status.IN_PROGRESS));
+            fail();
+        } catch (NotFoundException e) {
+            //
+        } catch (Exception e) {
+            fail();
+        }
+
+    }
+
+    @Test
+    void setTodoToDeleted_shouldSuccess_whenCalled() {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
         TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
@@ -141,6 +227,30 @@ class TodoServiceTest {
         // When
         try {
             todoService.setTodoToDeleted("1234");
+        } catch (Exception e) {
+            fail();
+        }
+    }
+
+    @Test
+    void deleteTodo_shouldReturn404_whenCalled_withDeletedID() throws NotFoundException {
+        TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
+        IdService mockIdService = Mockito.mock(IdService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+
+        Map<Integer, TodoState> timeline = new HashMap<>();
+        timeline.put(1, new  TodoState("Initial Content", Status.OPEN));
+        timeline.put(2, new TodoState("Initial Content", Status.DELETED));
+        Todo DeletedTodo = new Todo ("1234", timeline);
+
+        when(mockTodoRepo.findTodoById(any())).thenReturn(DeletedTodo);
+
+        // When
+        try {
+            todoService.setTodoToDeleted("1234");
+            fail();
+        } catch (NotFoundException e) {
+            // success
         } catch (Exception e) {
             fail();
         }

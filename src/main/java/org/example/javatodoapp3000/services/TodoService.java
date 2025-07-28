@@ -30,32 +30,51 @@ public class TodoService {
         }
 
         public TodoDto addTodo(TodoDto todoDto) {
-            Todo todo = new Todo(idService.generateId(), todoDto);
+            Todo todo = new Todo(todoDto.id() != null ? todoDto.id() : idService.generateId(), todoDto);
             Todo newTodo = todoRepo.save(todo);
             return newTodo.getLatestStateAsTodoDto();
         }
 
-        public TodoDto findTodoById(String id) {
-            Todo todo = todoRepo.findTodoById(id);
-            return todo.getLatestStateAsTodoDto();
+        public TodoDto findTodoById(String id) throws NotFoundException {
+            try {
+                Todo todo = todoRepo.findTodoById(id);
+                TodoDto foundTodoDto = todo.getLatestStateAsTodoDto();
+                if (foundTodoDto.status() == Status.DELETED) {
+                    throw new NotFoundException("Todo with id " + id + " not found");
+                } else {
+                    return foundTodoDto;
+                }
+            } catch (Exception ex) {
+                throw new NotFoundException("Todo with id " + id + " not found.");
+            }
         }
 
         public TodoDto updateTodo(TodoDto todoDto) throws NotFoundException {
-            Todo todo = todoRepo.findTodoById(todoDto.id());
-            if (todo != null) {
-                Todo newTodo = todo.updateTodo(todoDto);
-                Todo updatedTodo = todoRepo.save(newTodo);
-                return updatedTodo.getLatestStateAsTodoDto();
+            Todo oldTodo = todoRepo.findTodoById(todoDto.id());
+            if (oldTodo != null) {
+                TodoDto oldTodoDto = oldTodo.getLatestStateAsTodoDto();
+                if (oldTodoDto.status() == Status.DELETED) {
+                    throw new NotFoundException("Todo item with id " +  todoDto.id() + " not found");
+                } else {
+                    Todo newTodo = oldTodo.updateTodo(todoDto);
+                    Todo updatedTodo = todoRepo.save(newTodo);
+                    return updatedTodo.getLatestStateAsTodoDto();
+                }
             } else {
                 throw new NotFoundException("Todo item with id " + todoDto.id() + " not found.");
             }
         }
 
         public void setTodoToDeleted(String id) throws NotFoundException {
-            Todo todo = todoRepo.findTodoById(id);
-            if (todo != null) {
-                Todo deletedTodo = todo.setStateDeleted();
-                todoRepo.save(deletedTodo);
+            Todo oldTodo = todoRepo.findTodoById(id);
+            if (oldTodo != null) {
+                TodoDto oldTodoDto  = oldTodo.getLatestStateAsTodoDto();
+                if (oldTodoDto.status() == Status.DELETED) {
+                    throw new NotFoundException("Todo item with id " + id + " not found");
+                } else {
+                    Todo deletedTodo = oldTodo.setStateDeleted();
+                    todoRepo.save(deletedTodo);
+                }
             } else {
                 throw new NotFoundException("Todo item with id " + id + " not found.");
             }
