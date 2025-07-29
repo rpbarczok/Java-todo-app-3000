@@ -16,6 +16,7 @@ import java.util.List;
 public class TodoService {
         private final TodoRepo todoRepo;
         private final IdService idService;
+        private final ChatGPTService chatGPTService;
 
         public List<TodoDto> findAllTodos() {
             List<Todo> todos = todoRepo.findAll();
@@ -30,7 +31,8 @@ public class TodoService {
         }
 
         public TodoDto addTodo(TodoDto todoDto) {
-            Todo todo = new Todo(todoDto.id() != null ? todoDto.id() : idService.generateId(), todoDto);
+            TodoDto correctedTodoDto = todoDto.withDescription(chatGPTService.autoCorrectString(todoDto.description()));
+            Todo todo = new Todo(correctedTodoDto.id() != null ? correctedTodoDto.id() : idService.generateId(), correctedTodoDto);
             Todo newTodo = todoRepo.save(todo);
             return newTodo.getLatestStateAsTodoDto();
         }
@@ -56,7 +58,8 @@ public class TodoService {
                 if (oldTodoDto.status() == Status.DELETED) {
                     throw new NotFoundException("Todo item with id " +  todoDto.id() + " not found");
                 } else {
-                    Todo newTodo = oldTodo.updateTodo(todoDto);
+                    TodoDto todoDtoCorrected = todoDto.withDescription(chatGPTService.autoCorrectString(todoDto.description()));
+                    Todo newTodo = oldTodo.updateTodo(todoDtoCorrected);
                     Todo updatedTodo = todoRepo.save(newTodo);
                     return updatedTodo.getLatestStateAsTodoDto();
                 }

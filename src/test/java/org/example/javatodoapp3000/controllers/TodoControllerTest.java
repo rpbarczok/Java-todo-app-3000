@@ -1,6 +1,7 @@
 package org.example.javatodoapp3000.controllers;
 
 import org.example.javatodoapp3000.dtos.TodoDto;
+import org.example.javatodoapp3000.services.ChatGPTService;
 import org.example.javatodoapp3000.services.IdService;
 import org.example.javatodoapp3000.services.TodoService;
 import org.example.javatodoapp3000.utils.Status;
@@ -8,11 +9,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -28,6 +33,9 @@ class TodoControllerTest{
     @Autowired
     private IdService idService;
 
+    @MockitoBean
+    private ChatGPTService chatGPTService;
+
     @Test
     void getAllTodos_returns_empty_list_when_empty() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/todo"))
@@ -38,6 +46,7 @@ class TodoControllerTest{
 
     @Test
     void getAllTodos_returns_list_of_one_todo() throws Exception {
+        when(chatGPTService.autoCorrectString("Hallo")).thenReturn("Hallo");
         //Given
         todoService.addTodo(new TodoDto(idService.generateId(), "Hallo", Status.OPEN));
 
@@ -56,6 +65,7 @@ class TodoControllerTest{
 
     @Test
     void postTodo_returns_new_todo() throws Exception {
+        when(chatGPTService.autoCorrectString("Hallo World")).thenReturn("Hallo world");
         mockMvc.perform(MockMvcRequestBuilders.post("/api/todo")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -69,7 +79,8 @@ class TodoControllerTest{
 
     @Test
     void getTodo_by_id_gets_specific_todo_id() throws Exception {
-        //Given
+        when(chatGPTService.autoCorrectString("Hallo")).thenReturn("Hallo");
+
         todoService.addTodo(new TodoDto("1234", "Hallo", Status.OPEN));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/todo/1234"))
@@ -100,7 +111,7 @@ class TodoControllerTest{
 
     @Test
     void  putTodo_returns_updated_todo() throws Exception {
-        //Given
+        when(chatGPTService.autoCorrectString("Hallo World")).thenReturn("Hallo world");
         todoService.addTodo(new TodoDto("1234", "Hallo", Status.OPEN));
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/todo/1234")
@@ -108,7 +119,7 @@ class TodoControllerTest{
                         .content("""
                                 {
                                  "id": "1234",
-                                 "description": "Hallo",
+                                 "description": "Hallo World",
                                  "status": "IN_PROGRESS"
                                  }
                                 """))
@@ -116,7 +127,7 @@ class TodoControllerTest{
                 .andExpect(MockMvcResultMatchers.content().json("""
                         {
                                 "id": "1234",
-                                "description": "Hallo",
+                                "description": "Hallo world",
                                 "status": "IN_PROGRESS"
                         }
                         """));

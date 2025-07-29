@@ -27,7 +27,8 @@ class TodoServiceTest {
     void findAllTodos_returns_all_todos_as_todo_dto() {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
-        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+        ChatGPTService mockChatGPTService = Mockito.mock(ChatGPTService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService, mockChatGPTService);
         when(mockIdService.generateId()).thenReturn("1234");
 
         TodoState initialState = new TodoState("Initial STate", Status.OPEN);
@@ -56,10 +57,10 @@ class TodoServiceTest {
     void addTodo() {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
-
-        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+        ChatGPTService mockChatGPTService = Mockito.mock(ChatGPTService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService, mockChatGPTService);
         when(mockIdService.generateId()).thenReturn("1234");
-
+        when(mockChatGPTService.autoCorrectString("Hallo")).thenReturn("Hallo");
         TodoDto input = new TodoDto("1234","Hallo", Status.OPEN);
 
         Todo todo = new Todo("1234", "Hallo", Status.OPEN);
@@ -78,7 +79,8 @@ class TodoServiceTest {
     void findTodoById_shouldReturnTodo_whenCalledWithExistingID() throws NotFoundException {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
-        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+        ChatGPTService mockChatGPTService = Mockito.mock(ChatGPTService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService, mockChatGPTService);
 
         TodoDto expected = new TodoDto("1234", "Updated Content", Status.IN_PROGRESS);
         when(mockIdService.generateId()).thenReturn("1234");
@@ -99,7 +101,8 @@ class TodoServiceTest {
     void findTodoById_shouldReturnNotFoundException_whenCalledWithNonExistingID() throws NotFoundException {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
-        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+        ChatGPTService mockChatGPTService = Mockito.mock(ChatGPTService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService, mockChatGPTService);
 
         when(mockTodoRepo.findTodoById(any())).thenReturn(null);
         //Then
@@ -117,7 +120,8 @@ class TodoServiceTest {
     void findTodoById_shouldReturnNotFoundException_whenCalledWithDeletedID() throws NotFoundException {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
-        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+        ChatGPTService mockChatGPTService = Mockito.mock(ChatGPTService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService, mockChatGPTService);
 
         when(mockIdService.generateId()).thenReturn("1234");
 
@@ -141,17 +145,20 @@ class TodoServiceTest {
     void updateTodo_shouldReturnUpdatedTodo_whenCalled_withExistingID() throws NotFoundException {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
-        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+        ChatGPTService mockChatGPTService = Mockito.mock(ChatGPTService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService, mockChatGPTService);
+        when(mockChatGPTService.autoCorrectString("Initial Content")).thenReturn("Initial content");
         when(mockIdService.generateId()).thenReturn("1234");
 
         Todo original = new Todo("1234", "Initial Content", Status.OPEN);
 
         Map<Integer, TodoState> timeline = new HashMap<>();
-        timeline.put(1, new  TodoState("Initial Content", Status.OPEN));
-        timeline.put(2, new TodoState("Initial Content", Status.IN_PROGRESS));
+        timeline.put(1, new  TodoState("Initial content", Status.OPEN));
+        timeline.put(2, new TodoState("Initial content", Status.IN_PROGRESS));
         Todo updatedTodo = new Todo ("1234", timeline);
 
-        TodoDto expected = new TodoDto("1234", "Initial Content", Status.IN_PROGRESS);
+        TodoDto wrongSpelling = new TodoDto("1234", "Initial Content", Status.IN_PROGRESS);
+        TodoDto expected = new TodoDto("1234", "Initial content", Status.IN_PROGRESS);
 
         when(mockTodoRepo.findTodoById(any())).thenReturn(original);
 
@@ -167,14 +174,17 @@ class TodoServiceTest {
     void updateTodo_shouldReturn404_whenCalled_withNonExistingID() throws NotFoundException {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
-        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+        ChatGPTService mockChatGPTService = Mockito.mock(ChatGPTService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService, mockChatGPTService);
+        when(mockChatGPTService.autoCorrectString("Initial Content")).thenReturn("Initial content");
+
         when(mockIdService.generateId()).thenReturn("1234");
 
         when(mockTodoRepo.findTodoById(any())).thenReturn(null);
 
         // When
         try {
-            todoService.updateTodo(new TodoDto("1234", "Initial Content", Status.IN_PROGRESS));
+            todoService.updateTodo(new TodoDto("1234", "Initial content", Status.IN_PROGRESS));
             fail();
         } catch (NotFoundException e) {
             // success
@@ -187,7 +197,9 @@ class TodoServiceTest {
     void updateTodo_shouldReturn404_whenCalled_withDeletedID() throws NotFoundException {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
-        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+        ChatGPTService mockChatGPTService = Mockito.mock(ChatGPTService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService, mockChatGPTService);
+        when(mockChatGPTService.autoCorrectString("Initial Content")).thenReturn("Initial content");
 
         Map<Integer, TodoState> timeline = new HashMap<>();
         timeline.put(1, new  TodoState("Initial Content", Status.OPEN));
@@ -197,7 +209,7 @@ class TodoServiceTest {
         when(mockTodoRepo.findTodoById(any())).thenReturn(DeletedTodo);
 
         try {
-            todoService.updateTodo(new TodoDto("1234", "Initial Content", Status.IN_PROGRESS));
+            todoService.updateTodo(new TodoDto("1234", "Initial content", Status.IN_PROGRESS));
             fail();
         } catch (NotFoundException e) {
             //
@@ -211,7 +223,10 @@ class TodoServiceTest {
     void setTodoToDeleted_shouldSuccess_whenCalled() {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
-        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+        ChatGPTService mockChatGPTService = Mockito.mock(ChatGPTService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService, mockChatGPTService);
+        when(mockChatGPTService.autoCorrectString("Initial Content")).thenReturn("Initial content");
+
         when(mockIdService.generateId()).thenReturn("1234");
 
         Todo original = new Todo("1234", "Initial Content", Status.OPEN);
@@ -236,7 +251,9 @@ class TodoServiceTest {
     void deleteTodo_shouldReturn404_whenCalled_withDeletedID() throws NotFoundException {
         TodoRepo mockTodoRepo = Mockito.mock(TodoRepo.class);
         IdService mockIdService = Mockito.mock(IdService.class);
-        TodoService todoService = new TodoService(mockTodoRepo, mockIdService);
+        ChatGPTService mockChatGPTService = Mockito.mock(ChatGPTService.class);
+        TodoService todoService = new TodoService(mockTodoRepo, mockIdService, mockChatGPTService);
+        when(mockChatGPTService.autoCorrectString("Initial Content")).thenReturn("Initial content");
 
         Map<Integer, TodoState> timeline = new HashMap<>();
         timeline.put(1, new  TodoState("Initial Content", Status.OPEN));
