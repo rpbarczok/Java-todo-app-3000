@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +32,8 @@ public class TodoService {
         }
 
         public TodoDto addTodo(TodoDto todoDto) {
-            TodoDto correctedTodoDto = todoDto.withDescription(chatGPTService.autoCorrectString(todoDto.description()));
-            Todo todo = new Todo(correctedTodoDto.id() != null ? correctedTodoDto.id() : idService.generateId(), correctedTodoDto);
+            todoDto = todoDto.withDescription(chatGPTService.autoCorrectString(todoDto.description()));
+            Todo todo = new Todo(todoDto.id() != null ? todoDto.id() : idService.generateId(), todoDto);
             Todo newTodo = todoRepo.save(todo);
             return newTodo.getLatestStateAsTodoDto();
         }
@@ -58,8 +59,10 @@ public class TodoService {
                 if (oldTodoDto.status() == Status.DELETED) {
                     throw new NotFoundException("Todo item with id " +  todoDto.id() + " not found");
                 } else {
-                    TodoDto todoDtoCorrected = todoDto.withDescription(chatGPTService.autoCorrectString(todoDto.description()));
-                    Todo newTodo = oldTodo.updateTodo(todoDtoCorrected);
+                    if (!Objects.equals(oldTodoDto.description(), todoDto.description())) {
+                        todoDto = todoDto.withDescription(chatGPTService.autoCorrectString(todoDto.description()));
+                    }
+                    Todo newTodo = oldTodo.updateTodo(todoDto);
                     Todo updatedTodo = todoRepo.save(newTodo);
                     return updatedTodo.getLatestStateAsTodoDto();
                 }
